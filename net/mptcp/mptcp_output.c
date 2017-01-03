@@ -40,6 +40,8 @@ static const int mptcp_dss_len = MPTCP_SUB_LEN_DSS_ALIGN +
 				 MPTCP_SUB_LEN_ACK_ALIGN +
 				 MPTCP_SUB_LEN_SEQ_ALIGN;
 
+static int mptcp_segment_count = 0;
+
 static inline int mptcp_sub_len_remove_addr(u16 bitfield)
 {
 	unsigned int c;
@@ -647,12 +649,13 @@ bool mptcp_write_xmit(struct sock *meta_sk, unsigned int mss_now, int nonagle,
 
 	while ((skb = mpcb->sched_ops->next_segment(meta_sk, &reinject, &subsk,
 						    &sublimit))) {
-		mptcp_debug("skb->len: %d, skb->data_len: %d, reinject: %d, sublimit: %d\n",
-				skb->len, skb->data_len, reinject, sublimit);
+		mptcp_segment_count ++;
 		unsigned int limit;
 
 		subtp = tcp_sk(subsk);
 		mss_now = tcp_current_mss(subsk);
+		mptcp_debug("skb->len: %d, reinject: %d, sublimit: %d, segment_count: %d, mss: %d\n",
+				skb->len, reinject, sublimit, mptcp_segment_count, mss_now);
 
 		if (reinject == 1) {
 			if (!after(TCP_SKB_CB(skb)->end_seq, meta_tp->snd_una)) {

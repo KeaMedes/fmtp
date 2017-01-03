@@ -2,12 +2,15 @@
 # encoding: utf-8
 from subprocess import check_output, call, check_call
 import os
+import glob
 
 MPTCP_BASE = '/home/luoy/mptcp/mptcp_src'
 
 def update_files():
-    check_output(['cp', 'include/net/*', os.path.join(MPTCP_BASE, 'include', 'net')])
-    check_output(['cp', 'net/mptcp/*', os.path.join(MPTCP_BASE, 'net', 'mptcp')])
+    for f in glob.glob('include/net/*'):
+        check_output(['cp', f, os.path.join(MPTCP_BASE, 'include', 'net')])
+    for f in glob.glob('net/mptcp/*'):
+        check_output(['cp', f, os.path.join(MPTCP_BASE, 'net', 'mptcp')])
 
    
 def build_deb():
@@ -31,4 +34,6 @@ def copy_and_install_image():
 
 
 if __name__ == '__main__':
+    update_files()
+    build_deb()
     copy_and_install_image()
