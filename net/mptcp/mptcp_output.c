@@ -647,6 +647,8 @@ bool mptcp_write_xmit(struct sock *meta_sk, unsigned int mss_now, int nonagle,
 
 	while ((skb = mpcb->sched_ops->next_segment(meta_sk, &reinject, &subsk,
 						    &sublimit))) {
+		mptcp_debug("skb->len: %d, skb->data_len: %d, reinject: %d, sublimit: %d\n",
+				skb->len, skb->data_len, reinject, sublimit);
 		unsigned int limit;
 
 		subtp = tcp_sk(subsk);
