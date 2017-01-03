@@ -39,6 +39,7 @@
 #include <linux/socket.h>
 #include <linux/tcp.h>
 #include <linux/kernel.h>
+#include <linux/sched.h>
 
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>
@@ -650,7 +651,7 @@ extern struct workqueue_struct *mptcp_wq;
 #define mptcp_debug(fmt, args...)					\
 	do {								\
 		if (unlikely(sysctl_mptcp_debug))			\
-			pr_err(__FILE__ ": " fmt, ##args);	\
+			pr_err("%d:%s:%d " fmt, task_pid_nr(current), __FILE__, __LINE__, ##args);	\
 	} while (0)
 
 /* Iterates over all subflows */
