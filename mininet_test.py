@@ -108,10 +108,15 @@ def set_mptcp_rr():
 	lg.info("setting MPTCP sched to rr")
 	sysctl_set('net.mptcp.mptcp_scheduler', 'roundrobin')
 
+def set_mptcp_simple():
+	lg.info("setting MPTCP sched to simple")
+	sysctl_set('net.mptcp.mptcp_scheduler', 'simple')
+
 def setup(args):
 	set_mptcp_enabled(True)
 	set_mptcp_debug(True)
 	set_mptcp_fullmesh()
+	set_mptcp_simple()
 	# set_mptcp_rr()
 	# set_mptcp_ndiffports(args.ndiffports)
 
