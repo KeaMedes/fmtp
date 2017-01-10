@@ -1,6 +1,7 @@
 /* MPTCP Scheduler module selector. Highly inspired by tcp_cong.c */
 
 #include <linux/module.h>
+#include <linux/kernel.h>
 #include <net/mptcp.h>
 
 static DEFINE_SPINLOCK(mptcp_sched_list_lock);
@@ -142,15 +143,27 @@ static struct sock
 	bool found_unused = false;
 	bool found_unused_una = false;
 	struct sock *sk;
+	char debug_message[100] = {0};
+	char *debug_message_ptr = debug_message;
+	int count = 0;
 
 	mptcp_for_each_sk(mpcb, sk) {
 		struct tcp_sock *tp = tcp_sk(sk);
 		bool unused = false;
+		int debug_len = 0;
+		int debug_reinject;
 
 		/* First, we choose only the wanted sks */
 		if (!(*selector)(tp))
 			continue;
 
+		debug_reinject = mptcp_dont_reinject_skb(tp, skb);
+		if (debug_reinject) {
+			debug_len = sprintf(debug_message_ptr, "round %d: %d %d %d ",
+				count, tp->mptcp->path_index, TCP_SKB_CB(skb)->path_mask, debug_reinject);
+			debug_message_ptr += debug_len;
+		}
+		count ++;
 		if (!mptcp_dont_reinject_skb(tp, skb))
 			unused = true;
 		else if (found_unused)
@@ -185,6 +198,8 @@ static struct sock
 			bestsk = sk;
 		}
 	}
+	if (debug_message != debug_message_ptr)
+		mptcp_debug("%s\n", debug_message);
 
 	if (bestsk) {
 		/* The force variable is used to mark the returned sk as
