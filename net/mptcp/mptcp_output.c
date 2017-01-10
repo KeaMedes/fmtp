@@ -654,8 +654,8 @@ bool mptcp_write_xmit(struct sock *meta_sk, unsigned int mss_now, int nonagle,
 
 		subtp = tcp_sk(subsk);
 		mss_now = tcp_current_mss(subsk);
-		mptcp_debug("skb->len: %d, reinject: %d, sublimit: %d, segment_count: %d, mss: %d\n",
-				skb->len, reinject, sublimit, mptcp_segment_count, mss_now);
+		// mptcp_debug("skb->len: %d, reinject: %d, sublimit: %d, segment_count: %d, path_index: %d\n",
+		// 		skb->len, reinject, sublimit, mptcp_segment_count, subtp->mptcp->path_index);
 
 		if (reinject == 1) {
 			if (!after(TCP_SKB_CB(skb)->end_seq, meta_tp->snd_una)) {
