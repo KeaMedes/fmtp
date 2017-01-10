@@ -105,14 +105,14 @@ static struct sock *simple_get_available_subflow(struct sock *meta_sk,
 	    skb && mptcp_is_data_fin(skb)) {
 		mptcp_for_each_sk(mpcb, sk) {
 			if (tcp_sk(sk)->mptcp->path_index == mpcb->dfin_path_index &&
-			    mptcp_rr_is_available(sk, skb, zero_wnd_test, true))
+			    mptcp_simple_is_available(sk, skb, zero_wnd_test, true))
 				return sk;
 		}
 	}
 
 	/* First, find the best subflow */
 	mptcp_for_each_sk(mpcb, sk) {
-		struct tcp_sock *tp = tcp_sk(sk);
+		// struct tcp_sock *tp = tcp_sk(sk);
 
 		if (mptcp_simple_is_available(sk, skb, zero_wnd_test, true)) {
 			return sk;
@@ -174,18 +174,19 @@ static struct sk_buff *mptcp_simple_next_segment(struct sock *meta_sk,
 {
 	const struct mptcp_cb *mpcb = tcp_sk(meta_sk)->mpcb;
 	struct sock *sk_it, *choose_sk = NULL;
-	struct sk_buff *skb = __mptcp_rr_next_segment(meta_sk, reinject);
-	unsigned char split = num_segments;
-	unsigned char iter = 0, full_subs = 0; /* full_subs: the number of flows that are fully used during a burst data transfer. */
+	struct sk_buff *skb = __mptcp_simple_next_segment(meta_sk, reinject);
+	// unsigned char split = num_segments;
+	// unsigned char iter = 0, full_subs = 0; /* full_subs: the number of flows that are fully used during a burst data transfer. */
 
 	/* As we set it, we have to reset it as well. */
+	mptcp_debug("mptcp_simple is here\n");
 	*limit = 0;
 
 	if (!skb)
 		return NULL;
 
 	if (*reinject) {
-		*subsk = rr_get_available_subflow(meta_sk, skb, false);
+		*subsk = simple_get_available_subflow(meta_sk, skb, false);
 		if (!*subsk)
 			return NULL;
 
@@ -195,7 +196,7 @@ static struct sk_buff *mptcp_simple_next_segment(struct sock *meta_sk,
 	mptcp_for_each_sk(mpcb, sk_it)  {
 		struct tcp_sock *tp_it = tcp_sk(sk_it);
 
-		if (mptcp_simple_is_available(sk_it, skb, false, cwnd_limited)) {
+		if (mptcp_simple_is_available(sk_it, skb, false, true)) {
 			choose_sk = sk_it;
 			goto found;
 		}
@@ -257,7 +258,7 @@ found:
 		// struct tcp_sock *choose_tp = tcp_sk(choose_sk);
 		// struct rrsched_priv *rsp = rrsched_get_priv(choose_tp);
 
-		if (!mptcp_rr_is_available(choose_sk, skb, false, true))
+		if (!mptcp_simple_is_available(choose_sk, skb, false, true))
 			return NULL;
 
 		// *subsk = choose_sk;
@@ -285,8 +286,11 @@ static struct mptcp_sched_ops mptcp_sched_simple = {
 static int __init simple_register(void)
 {
 	// BUILD_BUG_ON(sizeof(struct rrsched_priv) > MPTCP_SCHED_SIZE);
-	if (mptcp_register_scheduler(&mptcp_sched_simple))
+	if (mptcp_register_scheduler(&mptcp_sched_simple)) {
+		mptcp_debug("simple register -1\n");
 		return -1;
+	}
+	mptcp_debug("simple register 0\n");
 
 	return 0;
 }
