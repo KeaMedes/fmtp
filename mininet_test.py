@@ -178,6 +178,8 @@ def genericTest(args, topo, setup, run, end):
 	net = Mininet(topo=topo, link=TCLink)
 	setup(args)
 	net.start()
+	print("wait for 5 seconds")
+	time.sleep(5)
 	mptcp_run(net, args)
 	# CLI(net)
 	data = run(args, net)
