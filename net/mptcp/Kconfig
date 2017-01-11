@@ -85,6 +85,12 @@ config MPTCP_ROUNDROBIN
 	  This is a very simple round-robin scheduler. Probably has bad performance
 	  but might be interesting for researchers.
 
+config MPTCP_SIMPLE
+	tristate "MPTCP Simple"
+	depends on (MPTCP=y)
+	---help---
+	  This is a very simple scheduler.
+
 choice
 	prompt "Default MPTCP Scheduler"
 	default DEFAULT
