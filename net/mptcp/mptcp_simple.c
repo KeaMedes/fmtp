@@ -261,7 +261,7 @@ found:
 		if (!mptcp_simple_is_available(choose_sk, skb, false, true))
 			return NULL;
 
-		// *subsk = choose_sk;
+		*subsk = choose_sk;
 		// mss_now = tcp_current_mss(*subsk);
 		// *limit = split * mss_now;
 
