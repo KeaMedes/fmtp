@@ -179,7 +179,6 @@ static struct sk_buff *mptcp_simple_next_segment(struct sock *meta_sk,
 	// unsigned char iter = 0, full_subs = 0; /* full_subs: the number of flows that are fully used during a burst data transfer. */
 
 	/* As we set it, we have to reset it as well. */
-	mptcp_debug("mptcp_simple is here\n");
 	*limit = 0;
 
 	if (!skb)
