@@ -5,9 +5,13 @@ from graphviz import Digraph
 
 class TraceNode(object):
     def __init__(self, start_time, size, trans_time, type):
-        self.start_time = datetime.datetime.strptime(start_time, '%H:%M:%S.%f')
+        if start_time:
+            self.start_time = datetime.datetime.strptime(start_time, '%H:%M:%S.%f')
         self.size = size
-        self.trans_time_ms = int(trans_time[:-3])
+        if trans_time:
+            self.trans_time_ms = int(trans_time[:-3])
+        else:
+            self.trans_time_ms = 0
         self.time_offset_ms = 0  # time delta in milliseconds format, 1/1000s
         self.type = type
         self.code = ''
@@ -99,7 +103,7 @@ class TraceDAG(object):
                 subgraph.node(node.code)
             subgraph.attr('graph', rank='same')
             dot.subgraph(subgraph)
-        dot.render('%s' % self.title, view=True)
+        dot.render('%s' % self.title, view=False, cleanup=True)
 
     def remove_all_output_edge(self, node):
         if self.graph.has_key(node):
