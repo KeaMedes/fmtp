@@ -131,7 +131,7 @@ def generate_random_graph(dag_facebook):
             output_node_list = node_list
         for node in output_node_list:
             node.trans_time_ms = random.randint(0, 1000)
-            yield output_node_list, graph
+            yield random_index, output_node_list, graph
 
 
 def test():
@@ -151,13 +151,13 @@ def test():
         # show_performace_gain(random_time, greedy_time, optimal_time)
     dag_facebook = dag_list[1]
     with open('result.txt', 'w') as fout:
-        for node_list, graph in generate_random_graph(dag_facebook):
+        for index, node_list, graph in generate_random_graph(dag_facebook):
             random_tl = get_traversal_list(node_list, graph, 'random')
             greedy_tl = get_traversal_list(node_list, graph, 'greedy')
             optimal_tl = get_traversal_list(node_list, graph, 'optimal')
 
             random_tm, greedy_tm, optimal_tm = get_time(random_tl), get_time(greedy_tl), get_time(optimal_tl)
-            fout.write('%d %d %d %f %f\n' % (random_tm, greedy_tm, optimal_tm,
+            fout.write('%d: %d %d %d %f %f\n' % (index, random_tm, greedy_tm, optimal_tm,
                        (random_tm - optimal_tm) / float(random_tm),
                        (greedy_tm - optimal_tm) / float(greedy_tm)))
 
