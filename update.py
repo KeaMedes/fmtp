@@ -8,16 +8,9 @@ MPTCP_BASE = '/home/luoy/mptcp/mptcp_src'
 
 def update_files():
     for f in glob.glob('include/net/*'):
-        f = f.replace('\\', '/')
-        cmd = ['scp', f, 'mininet@mininet:mptcp/include/net/']
-        print cmd
-        check_output(cmd)
+        check_output(['cp', f, os.path.join(MPTCP_BASE, 'include', 'net')])
     for f in glob.glob('net/mptcp/*'):
-        f = f.replace('\\', '/')
-        cmd = ['scp', f, 'mininet@mininet:mptcp/net/mptcp/']
-        print cmd
-        check_output(cmd)
-
+        check_output(['cp', f, os.path.join(MPTCP_BASE, 'net', 'mptcp')])
    
 def build_deb():
     cwd = os.getcwd()
@@ -41,5 +34,5 @@ def copy_and_install_image():
 
 if __name__ == '__main__':
     update_files()
-    # build_deb()
-    # copy_and_install_image()
+    build_deb()
+    copy_and_install_image()
