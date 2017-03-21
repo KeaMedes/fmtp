@@ -57,6 +57,8 @@
 #include <linux/workqueue.h>
 #include <linux/atomic.h>
 #include <linux/sysctl.h>
+#include <linux/kprobes.h>
+#include <asm/traps.h>
 
 static struct kmem_cache *mptcp_sock_cache __read_mostly;
 static struct kmem_cache *mptcp_cb_cache __read_mostly;
@@ -1265,6 +1267,7 @@ int mptcp_add_sock(struct sock *meta_sk, struct sock *sk, u8 loc_id, u8 rem_id,
 	tp->mptcp->attached = 1;
 
 	mpcb->cnt_subflows++;
+	mptcp_debug("%s: cnt_subflows: %d\n", __func__, mpcb->cnt_subflows);
 	atomic_add(atomic_read(&((struct sock *)tp)->sk_rmem_alloc),
 		   &meta_sk->sk_rmem_alloc);
 

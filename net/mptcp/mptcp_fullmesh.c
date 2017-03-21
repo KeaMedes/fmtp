@@ -515,6 +515,7 @@ next_subflow:
 			rem4.rem4_id = rem->rem4_id;
 
 			/* If a route is not yet available then retry once */
+			mptcp_debug("%s: call to mptcp_init4_subsockets\n", __func__);
 			if (mptcp_init4_subsockets(meta_sk, &mptcp_local->locaddr4[i],
 						   &rem4) == -ENETUNREACH)
 				retry = rem->retry_bitfield |= (1 << i);
@@ -692,6 +693,11 @@ next_event:
 
 	mptcp_local = rcu_dereference_bh(fm_ns->local);
 
+	mptcp_debug("%s: event->code: %d, addr: %pI4\n", __func__, event->code, &event->addr);
+	mptcp_debug("%s: before handling the event, bits: %d\n", __func__, mptcp_local->loc4_bits);
+	mptcp_for_each_bit_set(mptcp_local->loc4_bits, i) {
+		mptcp_debug("%s:	index: %d, addr: %pI4\n", __func__, i, &(mptcp_local->locaddr4[i].addr.s_addr));
+	}
 	if (event->code == MPTCP_EVENT_DEL) {
 		id = mptcp_find_address(mptcp_local, event->family, &event->addr);
 
@@ -775,6 +781,10 @@ next_event:
 		kfree(old);
 	}
 	success = true;
+	mptcp_debug("%s: after handling the event, bits: %d\n", __func__, mptcp_local->loc4_bits);
+	mptcp_for_each_bit_set(mptcp_local->loc4_bits, i) {
+		mptcp_debug("%s:	index: %d, addr: %pI4\n", __func__, i, &(mptcp_local->locaddr4[i].addr.s_addr));
+	}
 
 duno:
 	spin_unlock(&fm_ns->local_lock);
@@ -795,6 +805,8 @@ duno:
 			struct sock *meta_sk = (struct sock *)meta_tp, *sk;
 			struct fullmesh_priv *fmp = fullmesh_get_priv(mpcb);
 			bool meta_v4 = meta_sk->sk_family == AF_INET;
+
+			mptcp_debug("%s: enter hlist_nulls_loop\n", __func__);
 
 			if (sock_net(meta_sk) != net)
 				continue;
@@ -819,9 +831,13 @@ duno:
 			    mpcb->send_infinite_mapping)
 				goto next;
 
+			mptcp_debug("%s: is meta_sk\n", __func__);
+
 			/* May be that the pm has changed in-between */
 			if (mpcb->pm_ops != &full_mesh)
 				goto next;
+
+			mptcp_debug("%s: is full_mesh\n", __func__);
 
 			if (sock_owned_by_user(meta_sk)) {
 				if (!test_and_set_bit(MPTCP_PATH_MANAGER,
@@ -830,6 +846,8 @@ duno:
 
 				goto next;
 			}
+
+			mptcp_debug("%s: mpcb->cnt_subflows: %d\n", __func__, mpcb->cnt_subflows);
 
 			if (event->code == MPTCP_EVENT_ADD) {
 				fmp->add_addr++;
@@ -992,6 +1010,7 @@ static void add_pm_event(struct net *net, const struct mptcp_addr_event *event)
 	list_add_tail(&eventq->list, &fm_ns->events);
 
 	/* Create work-queue */
+	mptcp_debug("%s call to address_worker by delay_work_queue\n", __func__);
 	if (!delayed_work_pending(&fm_ns->address_worker))
 		queue_delayed_work(mptcp_wq, &fm_ns->address_worker,
 				   msecs_to_jiffies(500));
@@ -1345,6 +1364,7 @@ static void full_mesh_create_subflows(struct sock *meta_sk)
 	    !tcp_sk(mpcb->master_sk)->mptcp->fully_established)
 		return;
 
+	mptcp_debug("%s: queue_work create_subflow\n", __func__);
 	if (!work_pending(&fmp->subflow_work)) {
 		sock_hold(meta_sk);
 		queue_work(mptcp_wq, &fmp->subflow_work);
@@ -1711,6 +1731,7 @@ static void mptcp_fm_exit_net(struct net *net)
 	struct mptcp_loc_addr *mptcp_local;
 
 	fm_ns = fm_get_ns(net);
+	mptcp_debug("%s: cancel delayed work\n", __func__);
 	cancel_delayed_work_sync(&fm_ns->address_worker);
 
 	rcu_read_lock_bh();
