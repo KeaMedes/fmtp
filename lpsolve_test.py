@@ -16,8 +16,10 @@ def doit(item_number, order_list, cost_list):
     lpsolve('set_minim', lp)
 
     vec = []
-    for i in range(0, item_number):
-        vec += [x * (item_number - i) for x in cost_list]
+    # for i in range(0, item_number):
+    #     vec += [x * (item_number - i) for x in cost_list]
+    for cost in cost_list:
+        vec += [(item_number - i) * cost for i in range(0, item_number)]
     lpsolve('set_obj_fn', lp, vec)
 
     # set constraint 1
@@ -37,8 +39,8 @@ def doit(item_number, order_list, cost_list):
         vec = map(operator.sub, vec_pre, vec_des)
         lpsolve('add_constraint', lp, vec, LE, 0)
 
-    # set timeout
-    lpsolve('set_timeout', lp, 60)
+    # # set timeout
+    # lpsolve('set_timeout', lp, 60)
 
     lpsolve('solve', lp)
     vars = lpsolve('get_variables', lp)[0]

@@ -16,14 +16,6 @@ def get_trace(file_name):
 def topology_sort(node_list, graph, func):
     root = node_list[0]
 
-    for node in node_list:
-        if graph.has_key(node):
-            for sub_node in graph[node]:
-                if hasattr(sub_node, 'incoming_edge_num'):
-                    sub_node.incoming_edge_num += 1
-                else:
-                    setattr(sub_node, 'incoming_edge_num', 1)
-
     result_list = []
     zero_inedge_list = [root]
     while zero_inedge_list:
@@ -82,8 +74,10 @@ def get_traversal_list(node_list, graph, mode):
 
 def get_time(traversal_list):
     used_time = 0
-    for node in traversal_list:
-        used_time += used_time + node.trans_time_ms
+    # for node in traversal_list:
+    #     used_time += used_time + node.trans_time_ms
+    for i, node in enumerate(traversal_list):
+        used_time += (len(traversal_list) - i) * node.trans_time_ms
     return used_time
 
 
@@ -95,6 +89,8 @@ def show_performace_gain(time_random, time_optimal, time_greedy):
 
 def generate_random_graph(dag_facebook):
     node_list = [TraceNode(start_time=0, size=0, trans_time=0, type='') for i in range(0, 10)]
+    for i in range(0, 10):
+        node_list[i].code = chr(i + ord('0'))
 
     graph1 = {}
     graph1[node_list[0]] = [node_list[1], node_list[2], node_list[3], node_list[4]]
@@ -106,11 +102,11 @@ def generate_random_graph(dag_facebook):
     graph2 = {}
     graph2[node_list[0]] = [node_list[1], node_list[2], node_list[3]]
     graph2[node_list[1]] = [node_list[4], node_list[5]]
-    graph1[node_list[2]] = [node_list[7]]
-    graph1[node_list[3]] = [node_list[6]]
-    graph1[node_list[7]] = [node_list[8]]
-    graph1[node_list[6]] = [node_list[8]]
-    graph1[node_list[8]] = [node_list[9]]
+    graph2[node_list[2]] = [node_list[7]]
+    graph2[node_list[3]] = [node_list[6]]
+    graph2[node_list[7]] = [node_list[8]]
+    graph2[node_list[6]] = [node_list[8]]
+    graph2[node_list[8]] = [node_list[9]]
 
     graph3 = {}
     graph3[node_list[0]] = [node_list[1], node_list[2], node_list[3]]
@@ -121,7 +117,8 @@ def generate_random_graph(dag_facebook):
 
     graph_list = [graph1, graph2, graph3]
 
-    for i in xrange(0, 10):
+    for i in xrange(0, 100):
+        # pick the graph and node list
         random_index = random.randint(0, 3)
         if random_index == 3:
             graph = dag_facebook.graph
@@ -129,37 +126,66 @@ def generate_random_graph(dag_facebook):
         else:
             graph = graph_list[random_index]
             output_node_list = node_list
-        for node in output_node_list:
-            node.trans_time_ms = random.randint(0, 1000)
-            yield random_index, output_node_list, graph
+        # generate the random number as cost
+        random_int_list = random.sample(range(20, 1000), 10)
+        for node, trans_time in zip(output_node_list, random_int_list):
+            node.trans_time_ms = trans_time
+        yield random_index, output_node_list, graph
+
+
+def reset_node_list(node_list, graph):
+    for node in node_list:
+        if hasattr(node, 'incoming_edge_num'):
+            node.incoming_edge_num = 0
+        else:
+            setattr(node, 'incoming_edge_num', 0)
+    for node in node_list:
+        if graph.has_key(node):
+            for sub_node in graph[node]:
+                sub_node.incoming_edge_num += 1
 
 
 def test():
     trace_file = 'data_lbr.csv'
     dag_list = get_trace(trace_file)
-    # for i in range(0, 5):
-    #     dag = dag_list[i]
-    #     dag.to_dot()
-        # random_traversal_list = get_traversal_list(dag, 'random')
-        # greedy_traversal_list = get_traversal_list(dag, 'greedy')
-        # optimal_traversal_list = get_traversal_list(dag, 'optimal')
-        #
-        # random_time = get_time(random_traversal_list)
-        # greedy_time = get_time(greedy_traversal_list)
-        # optimal_time = get_time(optimal_traversal_list)
-        #
-        # show_performace_gain(random_time, greedy_time, optimal_time)
     dag_facebook = dag_list[1]
+    pg_random, pg_greedy, pg_greedy_random = 0.0, 0.0, 0.0
     with open('result.txt', 'w') as fout:
-        for index, node_list, graph in generate_random_graph(dag_facebook):
+        iter = 0
+        # for index, node_list, graph in generate_random_graph(dag_facebook):
+        for dag in dag_list:
+            node_list = dag.node_list
+            graph = dag.graph
+            index = -1
+            fout.write('iter: %d, graph index: %d\n' % (iter, index))
+            fout.write('node list: %s \n' % (str([(node.code, node.trans_time_ms) for node in node_list])))
+            reset_node_list(node_list, graph)
+            fout.write(
+                'incoming_edge before: %s\n' % (str([(node.code, node.incoming_edge_num) for node in node_list])))
             random_tl = get_traversal_list(node_list, graph, 'random')
+            reset_node_list(node_list, graph)
             greedy_tl = get_traversal_list(node_list, graph, 'greedy')
-            optimal_tl = get_traversal_list(node_list, graph, 'optimal')
-
-            random_tm, greedy_tm, optimal_tm = get_time(random_tl), get_time(greedy_tl), get_time(optimal_tl)
-            fout.write('%d: %d %d %d %f %f\n' % (index, random_tm, greedy_tm, optimal_tm,
-                       (random_tm - optimal_tm) / float(random_tm),
-                       (greedy_tm - optimal_tm) / float(greedy_tm)))
+            reset_node_list(node_list, graph)
+            # optimal_tl = get_traversal_list(node_list, graph, 'optimal')
+            random_tm = get_time(random_tl)
+            greedy_tm = get_time(greedy_tl)
+            # optimal_tm = get_time(optimal_tl)
+            fout.write('incoming_edge after: %s\n' % (str([(node.code, node.incoming_edge_num) for node in node_list])))
+            fout.write('random travel: %s \n' % (str([(node.code, node.trans_time_ms) for node in random_tl])))
+            fout.write('greedy travel: %s \n' % (str([(node.code, node.trans_time_ms) for node in greedy_tl])))
+            # fout.write('optimal travel: %s \n' % (str([(node.code, node.trans_time_ms) for node in optimal_tl])))
+            # pg_random += (random_tm - optimal_tm) / float(random_tm)
+            # pg_greedy += (greedy_tm - optimal_tm) / float(greedy_tm)
+            pg_greedy_random_tmp = (random_tm - greedy_tm) / float(random_tm)
+            # fout.write('%d %d %d %f %f\n\n' % (random_tm, greedy_tm, optimal_tm,
+            #                                    (random_tm - optimal_tm) / float(random_tm),
+            #                                    (greedy_tm - optimal_tm) / float(greedy_tm)))
+            fout.write('%d %d %f\n\n' % (random_tm, greedy_tm, pg_greedy_random_tmp))
+            iter += 1
+            pg_greedy_random += pg_greedy_random_tmp
+        # print 'average pg_random: %f, pg_greedy: %f' % (pg_random / iter, pg_greedy / iter)
+        print iter
+        print 'averge: %f' % (pg_greedy_random / iter)
 
 
 def main():
