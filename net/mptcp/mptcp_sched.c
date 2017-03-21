@@ -238,6 +238,7 @@ static struct sock *get_available_subflow(struct sock *meta_sk,
 	bool force;
 
 	/* if there is only one subflow, bypass the scheduling function */
+	// mptcp_debug("mpcb->cnt_subflows: %d\n", mpcb->cnt_subflows);
 	if (mpcb->cnt_subflows == 1) {
 		sk = (struct sock *)mpcb->connection_list;
 		if (!mptcp_is_available(sk, skb, zero_wnd_test))

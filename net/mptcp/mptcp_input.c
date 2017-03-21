@@ -49,8 +49,10 @@ static inline void mptcp_become_fully_estab(struct sock *sk)
 	tcp_sk(sk)->mptcp->fully_established = 1;
 
 	if (is_master_tp(tcp_sk(sk)) &&
-	    tcp_sk(sk)->mpcb->pm_ops->fully_established)
-		tcp_sk(sk)->mpcb->pm_ops->fully_established(mptcp_meta_sk(sk));
+	    tcp_sk(sk)->mpcb->pm_ops->fully_established) {
+			mptcp_debug("%s: call fully_established function\n", __func__);
+			tcp_sk(sk)->mpcb->pm_ops->fully_established(mptcp_meta_sk(sk));
+		}
 }
 
 /* Similar to tcp_tso_acked without any memory accounting */
